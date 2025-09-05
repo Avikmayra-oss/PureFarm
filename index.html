@@ -4,817 +4,338 @@
     <base target="_self">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PureFarm - Agricultural Products Marketplace</title>
-    <meta name="description" content="Buy and sell agricultural products, equipment, and services with secure transactions and quality assurance">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>PureFarm - Agricultural Marketplace</title>
+    <meta name="description" content="Buy and sell agricultural products - seeds, crops, fertilizers, livestock, tractors, and tools">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: "#2E7D32",
-                        secondary: "#388E3C",
-                        accent: "#FFA000",
-                        dark: "#1B5E20",
-                        light: "#F1F8E9",
-                        warning: "#F57C00",
-                        danger: "#D32F2F"
-                    },
-                    fontFamily: {
-                        sans: ['"Open Sans"', 'sans-serif']
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d'
+                        }
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        #map { height: 300px; }
+        .leaflet-container { z-index: 1; }
+        .chat-container { max-height: 400px; overflow-y: auto; }
+        .product-image { transition: transform 0.3s ease; }
+        .product-image:hover { transform: scale(1.05); }
+        .mobile-menu { 
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .mobile-menu.open {
+            max-height: 500px;
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-gray-50 font-sans">
+<body class="min-h-screen bg-gray-50">
     <!-- Navigation -->
-    <header class="bg-white shadow-md sticky top-0 z-50">
-        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <i class="fas fa-leaf text-2xl text-primary"></i>
-                <a href="#" class="text-xl font-bold text-primary">PureFarm</a>
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-leaf text-primary-600 text-2xl"></i>
+                    <span class="text-xl font-bold text-primary-800">PureFarm</span>
+                </div>
+                
+                <div class="hidden md:flex space-x-6">
+                    <a href="#" class="text-gray-700 hover:text-primary-600 transition">Home</a>
+                    <a href="#products" class="text-gray-700 hover:text-primary-600 transition">Products</a>
+                    <a href="#map-section" class="text-gray-700 hover:text-primary-600 transition">Map</a>
+                    <a href="#chat" class="text-gray-700 hover:text-primary-600 transition">Chat</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:block bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-seedling mr-1"></i>
+                        <span id="free-listings">200</span> free listings left
+                    </div>
+                    
+                    <div class="relative">
+                        <button id="user-menu-btn" class="bg-primary-600 text-white p-2 rounded-full">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                            3
+                        </div>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50">Profile</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50">My Listings</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50">Messages</a>
+                            <div class="border-t border-gray-100"></div>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50">Sign out</a>
+                        </div>
+                    </div>
+                    
+                    <button id="mobile-menu-btn" class="md:hidden">
+                        <i class="fas fa-bars text-gray-700 text-xl"></i>
+                    </button>
+                </div>
             </div>
             
-            <div class="hidden lg:flex items-center space-x-6">
-                <a href="#" class="text-gray-700 hover:text-primary font-medium">Home</a>
-                <a href="#" class="text-gray-700 hover:text-primary font-medium">Products</a>
-                <a href="#" class="text-gray-700 hover:text-primary font-medium">Services</a>
-                <a href="#" class="text-gray-700 hover:text-primary font-medium">Equipment</a>
-                <a href="#" class="text-gray-700 hover:text-primary font-medium">For Farmers</a>
-                <a href="#" class="text-gray-700 hover:text-primary font-medium">About</a>
-            </div>
-            
-            <div class="flex items-center space-x-4">
-                <div class="relative hidden md:block">
-                    <button id="languageDropdown" class="flex items-center text-gray-700 hover:text-primary">
-                        <i class="fas fa-language mr-1"></i>
-                        <span>EN</span>
-                        <i class="fas fa-chevron-down ml-1 text-xs"></i>
-                    </button>
-                    <div id="languageMenu" class="hidden absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-10">
-                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">English</a>
-                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">हिन्दी</a>
-                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Español</a>
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="mobile-menu md:hidden">
+                <div class="pt-2 pb-3 space-y-1">
+                    <a href="#" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50 rounded-md">Home</a>
+                    <a href="#products" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50 rounded-md">Products</a>
+                    <a href="#map-section" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50 rounded-md">Map</a>
+                    <a href="#chat" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50 rounded-md">Chat</a>
+                    <div class="block px-3 py-2 text-base font-medium text-gray-700 rounded-md">
+                        <i class="fas fa-seedling mr-1"></i>
+                        <span id="mobile-free-listings">200</span> free listings left
                     </div>
                 </div>
-                <button id="locationBtn" class="flex items-center text-gray-700 hover:text-primary">
-                    <i class="fas fa-map-marker-alt mr-1"></i>
-                    <span id="locationText">Detecting...</span>
-                </button>
-                <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-dark font-medium">Post Ad</button>
-                <div class="relative">
-                    <button id="userMenuBtn" class="text-gray-700 hover:text-primary">
-                        <i class="fas fa-user-circle text-xl"></i>
-                    </button>
-                    <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">My Account</a>
-                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">My Listings</a>
-                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Messages</a>
-                        <div class="border-t border-gray-200"></div>
-                        <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
-                    </div>
-                </div>
-                <button class="lg:hidden text-gray-700">
-                    <i class="fas fa-bars text-xl"></i>
-                </button>
             </div>
         </nav>
     </header>
 
-    <!-- Mobile Menu -->
-    <div id="mobileMenu" class="hidden lg:hidden bg-white shadow-md">
-        <div class="container mx-auto px-4 py-3">
-            <a href="#" class="block py-2 text-gray-700 hover:text-primary">Home</a>
-            <a href="#" class="block py-2 text-gray-700 hover:text-primary">Products</a>
-            <a href="#" class="block py-2 text-gray-700 hover:text-primary">Services</a>
-            <a href="#" class="block py-2 text-gray-700 hover:text-primary">Equipment</a>
-            <a href="#" class="block py-2 text-gray-700 hover:text-primary">For Farmers</a>
-            <a href="#" class="block py-2 text-gray-700 hover:text-primary">About</a>
-            <div class="pt-2 mt-2 border-t border-gray-200">
-                <a href="#" class="block py-2 text-gray-700 hover:text-primary">My Account</a>
-                <a href="#" class="block py-2 text-gray-700 hover:text-primary">Post Ad</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Hero Section with Search -->
-    <section class="bg-gradient-to-r from-primary to-secondary text-white py-16">
-        <div class="container mx-auto px-4">
-            <div class="max-w-4xl mx-auto text-center">
-                <h1 class="text-4xl md:text-5xl font-bold mb-6">India's Largest Agricultural Marketplace</h1>
-                <p class="text-xl mb-8">Connect directly with farmers, suppliers, and buyers across the country</p>
-                
-                <div class="bg-white rounded-lg shadow-xl p-4 md:p-6">
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <div class="flex-1">
-                            <select class="w-full p-3 border border-gray-300 rounded-md text-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent">
-                                <option value="">All Categories</option>
-                                <option value="produce">Fresh Produce</option>
-                                <option value="seeds">Seeds & Plants</option>
-                                <option value="equipment">Farm Equipment</option>
-                                <option value="livestock">Livestock</option>
-                                <option value="services">Services</option>
-                                <option value="fertilizers">Fertilizers</option>
-                                <option value="storage">Storage Solutions</option>
-                            </select>
-                        </div>
-                        <div class="flex-1">
-                            <input type="text" placeholder="Search for products, brands, or sellers..." class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent">
-                        </div>
-                        <div class="flex-1 relative">
-                            <input type="text" id="locationInput" placeholder="Enter city, state or PIN" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent">
-                            <button id="detectLocation" class="absolute right-3 top-3 text-gray-500 hover:text-primary">
-                                <i class="fas fa-location-arrow"></i>
-                            </button>
-                        </div>
-                        <button class="bg-accent text-white px-6 py-3 rounded-md hover:bg-yellow-600 font-medium">
-                            <i class="fas fa-search mr-2"></i> Search
-                        </button>
-                    </div>
-                    <div class="mt-4 flex flex-wrap justify-center gap-2">
-                        <button class="text-white text-sm flex items-center bg-primary bg-opacity-20 px-3 py-1 rounded-full">
-                            <i class="fas fa-wheat mr-1"></i> Grains
-                        </button>
-                        <button class="text-white text-sm flex items-center bg-primary bg-opacity-20 px-3 py-1 rounded-full">
-                            <i class="fas fa-carrot mr-1"></i> Vegetables
-                        </button>
-                        <button class="text-white text-sm flex items-center bg-primary bg-opacity-20 px-3 py-1 rounded-full">
-                            <i class="fas fa-apple-alt mr-1"></i> Fruits
-                        </button>
-                        <button class="text-white text-sm flex items-center bg-primary bg-opacity-20 px-3 py-1 rounded-full">
-                            <i class="fas fa-tractor mr-1"></i> Tractors
-                        </button>
-                        <button class="text-white text-sm flex items-center bg-primary bg-opacity-20 px-3 py-1 rounded-full">
-                            <i class="fas fa-cow mr-1"></i> Dairy
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Trust Indicators -->
-    <div class="bg-gray-100 py-4">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-wrap justify-center items-center gap-6 md:gap-12">
-                <div class="flex items-center">
-                    <i class="fas fa-shield-alt text-primary text-2xl mr-2"></i>
-                    <span class="text-gray-700">Verified Sellers</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-rupee-sign text-primary text-2xl mr-2"></i>
-                    <span class="text-gray-700">Secure Payments</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-truck text-primary text-2xl mr-2"></i>
-                    <span class="text-gray-700">Logistics Support</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-headset text-primary text-2xl mr-2"></i>
-                    <span class="text-gray-700">24/7 Support</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
-        <!-- Featured Listings -->
-        <section class="mb-12">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Featured Listings</h2>
-                <a href="#" class="text-primary font-medium flex items-center">
-                    View All <i class="fas fa-chevron-right ml-1 text-sm"></i>
-                </a>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-                    <div class="relative">
-                        <img src="https://picsum.photos/400/300?random=101" alt="Organic Wheat" class="w-full h-48 object-cover" loading="lazy">
-                        <div class="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded">Certified Organic</div>
-                        <div class="absolute top-2 right-2 bg-white text-primary p-2 rounded-full shadow">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-lg">Premium Wheat (Sharbati)</h3>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Verified</span>
-                        </div>
-                        <p class="text-accent font-bold mb-2">₹2,500 per quintal</p>
-                        <div class="flex items-center text-sm text-gray-600 mb-3">
-                            <i class="fas fa-map-marker-alt mr-1"></i>
-                            <span>Indore, Madhya Pradesh</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600 mb-3">
-                            <div class="flex text-yellow-400 mr-2">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                            </div>
-                            <span>(24 reviews)</span>
-                        </div>
-                        <button class="w-full bg-primary text-white py-2 rounded-md hover:bg-dark font-medium">View Details</button>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-                    <div class="relative">
-                        <img src="https://picsum.photos/400/300?random=102" alt="John Deere Tractor" class="w-full h-48 object-cover" loading="lazy">
-                        <div class="absolute top-2 right-2 bg-white text-primary p-2 rounded-full shadow">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-lg">John Deere 5050D Tractor</h3>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Verified</span>
-                        </div>
-                        <p class="text-accent font-bold mb-2">₹6,50,000</p>
-                        <div class="flex items-center text-sm text-gray-600 mb-3">
-                            <i class="fas fa-map-marker-alt mr-1"></i>
-                            <span>Ludhiana, Punjab</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600 mb-3">
-                            <div class="flex text-yellow-400 mr-2">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span>(12 reviews)</span>
-                        </div>
-                        <button class="w-full bg-primary text-white py-2 rounded-md hover:bg-dark font-medium">View Details</button>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-                    <div class="relative">
-                        <img src="https://picsum.photos/400/300?random=103" alt="Organic Vegetables" class="w-full h-48 object-cover" loading="lazy">
-                        <div class="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded">Organic</div>
-                        <div class="absolute top-2 right-2 bg-white text-primary p-2 rounded-full shadow">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-lg">Fresh Organic Vegetables</h3>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Verified</span>
-                        </div>
-                        <p class="text-accent font-bold mb-2">₹120 per kg</p>
-                        <div class="flex items-center text-sm text-gray-600 mb-3">
-                            <i class="fas fa-map-marker-alt mr-1"></i>
-                            <span>Nashik, Maharashtra</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600 mb-3">
-                            <div class="flex text-yellow-400 mr-2">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <span>(36 reviews)</span>
-                        </div>
-                        <button class="w-full bg-primary text-white py-2 rounded-md hover:bg-dark font-medium">View Details</button>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-                    <div class="relative">
-                        <img src="https://picsum.photos/400/300?random=104" alt="Dairy Cows" class="w-full h-48 object-cover" loading="lazy">
-                        <div class="absolute top-2 right-2 bg-white text-primary p-2 rounded-full shadow">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-lg">HF Crossbred Dairy Cows</h3>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Verified</span>
-                        </div>
-                        <p class="text-accent font-bold mb-2">₹45,000 each</p>
-                        <div class="flex items-center text-sm text-gray-600 mb-3">
-                            <i class="fas fa-map-marker-alt mr-1"></i>
-                            <span>Anand, Gujarat</span>
-                        </div>
-                        <div class="flex items-center text-sm text-gray-600 mb-3">
-                            <div class="flex text-yellow-400 mr-2">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <span>(8 reviews)</span>
-                        </div>
-                        <button class="w-full bg-primary text-white py-2 rounded-md hover:bg-dark font-medium">View Details</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Categories Section -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Browse Categories</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <a href="#" class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-center border border-gray-100">
-                    <div class="text-primary text-3xl mb-2">
-                        <i class="fas fa-apple-alt"></i>
-                    </div>
-                    <h3 class="font-medium">Fruits</h3>
-                    <p class="text-gray-500 text-sm">1,240 listings</p>
-                </a>
-                <a href="#" class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-center border border-gray-100">
-                    <div class="text-primary text-3xl mb-2">
-                        <i class="fas fa-carrot"></i>
-                    </div>
-                    <h3 class="font-medium">Vegetables</h3>
-                    <p class="text-gray-500 text-sm">980 listings</p>
-                </a>
-                <a href="#" class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-center border border-gray-100">
-                    <div class="text-primary text-3xl mb-2">
-                        <i class="fas fa-wheat"></i>
-                    </div>
-                    <h3 class="font-medium">Grains</h3>
-                    <p class="text-gray-500 text-sm">750 listings</p>
-                </a>
-                <a href="#" class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-center border border-gray-100">
-                    <div class="text-primary text-3xl mb-2">
-                        <i class="fas fa-seedling"></i>
-                    </div>
-                    <h3 class="font-medium">Seeds</h3>
-                    <p class="text-gray-500 text-sm">420 listings</p>
-                </a>
-                <a href="#" class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-center border border-gray-100">
-                    <div class="text-primary text-3xl mb-2">
-                        <i class="fas fa-tractor"></i>
-                    </div>
-                    <h3 class="font-medium">Equipment</h3>
-                    <p class="text-gray-500 text-sm">1,150 listings</p>
-                </a>
-                <a href="#" class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-center border border-gray-100">
-                    <div class="text-primary text-3xl mb-2">
-                        <i class="fas fa-cow"></i>
-                    </div>
-                    <h3 class="font-medium">Livestock</h3>
-                    <p class="text-gray-500 text-sm">680 listings</p>
-                </a>
-            </div>
-        </section>
-        
-        <!-- Location-Based Services -->
-        <section class="mb-12 bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="flex flex-col md:flex-row">
-                <div class="md:w-1/2 p-6 md:p-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Local Agricultural Services</h2>
-                    <p class="text-gray-600 mb-6">Find trusted service providers in your area for all your farming needs</p>
+    <main>
+        <!-- Hero Section with Search -->
+        <section class="bg-gradient-to-r from-primary-50 to-primary-100 py-12">
+            <div class="container mx-auto px-4">
+                <div class="max-w-3xl mx-auto text-center">
+                    <h1 class="text-4xl font-bold text-primary-800 mb-4">Find Agricultural Products Near You</h1>
+                    <p class="text-gray-700 mb-8">Buy and sell seeds, crops, fertilizers, livestock, tractors, and tools</p>
                     
-                    <div class="space-y-4">
-                        <div class="flex items-start">
-                            <div class="bg-primary bg-opacity-10 p-3 rounded-full mr-4">
-                                <i class="fas fa-tractor text-primary"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-gray-800">Equipment Rental</h3>
-                                <p class="text-gray-600">Rent tractors, harvesters and other equipment by the hour or day</p>
-                            </div>
+                    <div class="bg-white rounded-full shadow-md p-2 flex">
+                        <input type="text" id="search-input" placeholder="Search for products..." class="flex-grow px-4 py-2 focus:outline-none rounded-full">
+                        <select id="category-select" class="border-l px-4 py-2 focus:outline-none text-gray-600 rounded-l-none rounded-r-full">
+                            <option value="all">All Categories</option>
+                            <option value="seeds">Seeds</option>
+                            <option value="crops">Crops</option>
+                            <option value="fertilizers">Fertilizers</option>
+                            <option value="livestock">Livestock</option>
+                            <option value="tools">Tools</option>
+                        </select>
+                        <button id="search-btn" class="bg-primary-600 text-white px-6 py-2 rounded-full ml-2">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Categories -->
+        <section class="py-12">
+            <div class="container mx-auto px-4">
+                <h2 class="text-2xl font-bold text-center mb-8">Popular Categories</h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div class="category-btn bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition cursor-pointer" data-category="seeds">
+                        <div class="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-seedling text-primary-600 text-2xl"></i>
                         </div>
-                        <div class="flex items-start">
-                            <div class="bg-primary bg-opacity-10 p-3 rounded-full mr-4">
-                                <i class="fas fa-truck text-primary"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-gray-800">Transportation</h3>
-                                <p class="text-gray-600">Find reliable transport for your produce to markets and warehouses</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <div class="bg-primary bg-opacity-10 p-3 rounded-full mr-4">
-                                <i class="fas fa-user-tie text-primary"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-gray-800">Consultation</h3>
-                                <p class="text-gray-600">Expert advice on organic farming, crop rotation, and soil health</p>
-                            </div>
-                        </div>
+                        <h3 class="font-medium">Seeds</h3>
                     </div>
                     
-                    <button class="mt-6 bg-primary text-white px-6 py-3 rounded-md hover:bg-dark font-medium">
-                        View All Services
-                    </button>
-                </div>
-                <div class="md:w-1/2 h-64 md:h-auto">
-                    <div id="servicesMap" class="h-full w-full"></div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Government Schemes Section -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Government Schemes for Farmers</h2>
-            <div class="bg-primary bg-opacity-10 rounded-lg p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center mb-4">
-                            <div class="bg-primary text-white p-3 rounded-full mr-4">
-                                <i class="fas fa-rupee-sign"></i>
-                            </div>
-                            <h3 class="font-bold text-lg">PM Kisan Samman Nidhi</h3>
+                    <div class="category-btn bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition cursor-pointer" data-category="crops">
+                        <div class="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-wheat-alt text-primary-600 text-2xl"></i>
                         </div>
-                        <p class="text-gray-600 mb-4">₹6,000 per year in three equal installments to all land holding farmer families.</p>
-                        <a href="#" class="text-primary font-medium flex items-center">
-                            Learn More <i class="fas fa-chevron-right ml-1 text-sm"></i>
-                        </a>
+                        <h3 class="font-medium">Crops</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center mb-4">
-                            <div class="bg-primary text-white p-3 rounded-full mr-4">
-                                <i class="fas fa-tint"></i>
-                            </div>
-                            <h3 class="font-bold text-lg">PMKSY</h3>
+                    
+                    <div class="category-btn bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition cursor-pointer" data-category="fertilizers">
+                        <div class="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-flask text-primary-600 text-2xl"></i>
                         </div>
-                        <p class="text-gray-600 mb-4">Pradhan Mantri Krishi Sinchayee Yojana for irrigation and water conservation.</p>
-                        <a href="#" class="text-primary font-medium flex items-center">
-                            Learn More <i class="fas fa-chevron-right ml-1 text-sm"></i>
-                        </a>
+                        <h3 class="font-medium">Fertilizers</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center mb-4">
-                            <div class="bg-primary text-white p-3 rounded-full mr-4">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <h3 class="font-bold text-lg">PMFBY</h3>
+                    
+                    <div class="category-btn bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition cursor-pointer" data-category="livestock">
+                        <div class="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-cow text-primary-600 text-2xl"></i>
                         </div>
-                        <p class="text-gray-600 mb-4">Pradhan Mantri Fasal Bima Yojana provides crop insurance at low premium.</p>
-                        <a href="#" class="text-primary font-medium flex items-center">
-                            Learn More <i class="fas fa-chevron-right ml-1 text-sm"></i>
-                        </a>
+                        <h3 class="font-medium">Livestock</h3>
+                    </div>
+                    
+                    <div class="category-btn bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition cursor-pointer" data-category="machinery">
+                        <div class="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-tractor text-primary-600 text-2xl"></i>
+                        </div>
+                        <h3 class="font-medium">Machinery</h3>
+                    </div>
+                    
+                    <div class="category-btn bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition cursor-pointer" data-category="tools">
+                        <div class="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-tools text-primary-600 text-2xl"></i>
+                        </div>
+                        <h3 class="font-medium">Tools</h3>
                     </div>
                 </div>
             </div>
         </section>
-        
-        <!-- Testimonials -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">What Our Users Say</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                    <div class="flex items-center mb-4">
-                        <img src="https://picsum.photos/100?random=201" alt="User" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <h3 class="font-bold">Rajesh Kumar</h3>
-                            <div class="flex text-yellow-400">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-4">"PureFarm helped me sell my wheat crop at better prices than local mandis. The buyers were verified and payments were secure."</p>
-                    <p class="text-sm text-gray-500">Farmer from Punjab</p>
+
+        <!-- Featured Products -->
+        <section id="products" class="py-12 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-bold">Featured Products</h2>
+                    <a href="#" class="text-primary-600 hover:text-primary-800 flex items-center">
+                        View all <i class="fas fa-arrow-right ml-2 text-sm"></i>
+                    </a>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                    <div class="flex items-center mb-4">
-                        <img src="https://picsum.photos/100?random=202" alt="User" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <h3 class="font-bold">Priya Sharma</h3>
-                            <div class="flex text-yellow-400">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-4">"As a small retailer, I found reliable suppliers of organic vegetables through PureFarm. The quality checks give me confidence."</p>
-                    <p class="text-sm text-gray-500">Retailer from Bangalore</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                    <div class="flex items-center mb-4">
-                        <img src="https://picsum.photos/100?random=203" alt="User" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <h3 class="font-bold">Amit Patel</h3>
-                            <div class="flex text-yellow-400">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-4">"The equipment rental service saved me money during harvest season. Found a tractor nearby at reasonable rates."</p>
-                    <p class="text-sm text-gray-500">Farmer from Maharashtra</p>
+                
+                <div id="products-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Products will be loaded here -->
                 </div>
             </div>
         </section>
-        
-        <!-- Call to Action -->
-        <section class="bg-primary text-white rounded-lg p-8 mb-12 text-center">
-            <h2 class="text-3xl font-bold mb-4">Ready to Grow Your Agricultural Business?</h2>
-            <p class="text-xl mb-6 max-w-2xl mx-auto">Join thousands of farmers and buyers who are already benefiting from PureFarm marketplace</p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <button class="bg-white text-primary px-8 py-3 rounded-md hover:bg-gray-100 font-medium">
-                    Register as Seller
-                </button>
-                <button class="bg-accent text-white px-8 py-3 rounded-md hover:bg-yellow-600 font-medium">
-                    Browse Products
-                </button>
+
+        <!-- Map Section -->
+        <section id="map-section" class="py-12 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <h2 class="text-2xl font-bold text-center mb-8">Find Products Near You</h2>
+                
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div id="map" class="w-full"></div>
+                    <div class="p-4 flex overflow-x-auto space-x-3">
+                        <button class="distance-filter bg-primary-600 text-white px-4 py-2 rounded-full text-sm whitespace-nowrap" data-distance="5">Within 5 km</button>
+                        <button class="distance-filter bg-white border border-primary-600 text-primary-600 px-4 py-2 rounded-full text-sm whitespace-nowrap" data-distance="10">Within 10 km</button>
+                        <button class="distance-filter bg-white border border-primary-600 text-primary-600 px-4 py-2 rounded-full text-sm whitespace-nowrap" data-distance="25">Within 25 km</button>
+                        <button class="distance-filter bg-white border border-primary-600 text-primary-600 px-4 py-2 rounded-full text-sm whitespace-nowrap" data-distance="all">All nearby</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chat Section -->
+        <section id="chat" class="py-12 bg-white">
+            <div class="container mx-auto px-4">
+                <h2 class="text-2xl font-bold text-center mb-8">Chat with Sellers</h2>
+                
+                <div class="bg-white rounded-lg shadow-md overflow-hidden max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-3">
+                        <!-- Chat list -->
+                        <div class="border-r border-gray-200">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="font-semibold">Recent Chats</h3>
+                            </div>
+                            <div class="chat-list overflow-y-auto" style="max-height: 400px;">
+                                <!-- Chat items will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Chat messages -->
+                        <div class="md:col-span-2">
+                            <div class="p-4 border-b border-gray-200 flex items-center">
+                                <img src="https://picsum.photos/40?random=101" alt="Seller" class="w-10 h-10 rounded-full mr-3">
+                                <div>
+                                    <h3 id="current-chat-seller" class="font-semibold">Select a chat</h3>
+                                    <p id="current-chat-product" class="text-sm text-gray-500"></p>
+                                </div>
+                            </div>
+                            <div id="chat-messages" class="chat-container p-4" style="height: 300px; overflow-y: auto;">
+                                <div class="text-center text-gray-500 py-10">
+                                    Select a chat to view messages
+                                </div>
+                            </div>
+                            <div class="p-4 border-t border-gray-200 flex">
+                                <input type="text" id="chat-input" placeholder="Type your message..." class="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                <button id="send-message-btn" class="bg-primary-600 text-white px-4 py-2 rounded-r-lg hover:bg-primary-700 transition">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How it Works -->
+        <section class="py-12 bg-white">
+            <div class="container mx-auto px-4">
+                <h2 class="text-2xl font-bold text-center mb-12">How PureFarm Works</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center">
+                        <div class="bg-primary-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-primary-600 font-bold text-2xl">1</span>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Create Listing</h3>
+                        <p class="text-gray-600">List your agricultural products with details and photos</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="bg-primary-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-primary-600 font-bold text-2xl">2</span>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Connect with Buyers</h3>
+                        <p class="text-gray-600">Receive messages and negotiate with interested buyers</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="bg-primary-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-primary-600 font-bold text-2xl">3</span>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Complete Transaction</h3>
+                        <p class="text-gray-600">Finalize the deal and receive payment securely</p>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white pt-12 pb-6">
+    <footer class="bg-primary-900 text-white py-12">
         <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
-                    <h3 class="text-xl font-bold mb-4 flex items-center">
-                        <i class="fas fa-leaf mr-2"></i> PureFarm
-                    </h3>
-                    <p class="text-gray-400 mb-4">India's trusted agricultural marketplace connecting farmers, suppliers, and buyers nationwide.</p>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-leaf text-2xl"></i>
+                        <span class="text-xl font-bold">PureFarm</span>
+                    </div>
+                    <p class="text-primary-200 mb-4">The trusted marketplace for agricultural products</p>
                     <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-youtube"></i></a>
+                        <a href="#" class="text-primary-200 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-primary-200 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-primary-200 hover:text-white"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
+                
                 <div>
-                    <h4 class="font-bold mb-4">Quick Links</h4>
+                    <h3 class="font-bold text-lg mb-4">Quick Links</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white">Home</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Listings</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Pricing</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Contact</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Blog</a></li>
+                        <li><a href="#" class="text-primary-200 hover:text-white">Home</a></li>
+                        <li><a href="#products" class="text-primary-200 hover:text-white">Products</a></li>
+                        <li><a href="#map-section" class="text-primary-200 hover:text-white">Map View</a></li>
+                        <li><a href="#chat" class="text-primary-200 hover:text-white">Chat</a></li>
                     </ul>
                 </div>
+                
                 <div>
-                    <h4 class="font-bold mb-4">Categories</h4>
+                    <h3 class="font-bold text-lg mb-4">Categories</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white">Fresh Produce</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Seeds & Plants</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Farm Equipment</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Livestock</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Services</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Storage Solutions</a></li>
+                        <li><a href="#" class="text-primary-200 hover:text-white">Seeds</a></li>
+                        <li><a href="#" class="text-primary-200 hover:text-white">Crops</a></li>
+                        <li><a href="#" class="text-primary-200 hover:text-white">Fertilizers</a></li>
+                        <li><a href="#" class="text-primary-200 hover:text-white">Livestock</a></li>
                     </ul>
                 </div>
+                
                 <div>
-                    <h4 class="font-bold mb-4">Contact Us</h4>
+                    <h3 class="font-bold text-lg mb-4">Contact Us</h3>
                     <ul class="space-y-2">
-                        <li class="flex items-center">
-                            <i class="fas fa-envelope mr-2 text-gray-400"></i>
-                            <a href="mailto:info@purefarm.com" class="text-gray-400 hover:text-white">info@purefarm.com</a>
+                        <li class="flex items-start">
+                            <i class="fas fa-envelope mt-1 mr-2 text-primary-200"></i>
+                            <span class="text-primary-200">support@purefarm.com</span>
                         </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-phone mr-2 text-gray-400"></i>
-                            <a href="tel:+911234567890" class="text-gray-400 hover:text-white">+91 12345 67890</a>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
-                            <span class="text-gray-400">123 Farm Street, Agri City, India - 110001</span>
-                        </li>
-                    </ul>
-                    <div class="mt-4">
-                        <h5 class="font-bold mb-2">Download App</h5>
-                        <div class="flex space-x-2">
-                            <a href="#" class="bg-black text-white px-3 py-2 rounded flex items-center">
-                                <i class="fab fa-apple mr-1"></i> App Store
-                            </a>
-                            <a href="#" class="bg-black text-white px-3 py-2 rounded flex items-center">
-                                <i class="fab fa-google-play mr-1"></i> Play Store
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-gray-700 mt-8 pt-6">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <p class="text-gray-400 text-sm mb-4 md:mb-0">&copy; 2023 PureFarm. All rights reserved.</p>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white text-sm">Terms of Service</a>
-                        <a href="#" class="text-gray-400 hover:text-white text-sm">Privacy Policy</a>
-                        <a href="#" class="text-gray-400 hover:text-white text-sm">Cookie Policy</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script>
-        // Initialize maps
-        let map;
-        let servicesMap;
-        let userLocation = null;
-        let markers = [];
-        let serviceMarkers = [];
-
-        function initMaps() {
-            // Main map initialization
-            const defaultCoords = [20.5937, 78.9629]; // India coordinates
-            map = L.map('map').setView(defaultCoords, 5);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-            
-            // Services map initialization
-            servicesMap = L.map('servicesMap').setView(defaultCoords, 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(servicesMap);
-            
-            // Add sample markers for services
-            const serviceLocations = [
-                { coords: [19.0760, 72.8777], title: "Tractor Rental", type: "equipment" }, // Mumbai
-                { coords: [28.6139, 77.2090], title: "Harvesting Services", type: "service" }, // Delhi
-                { coords: [12.9716, 77.5946], title: "Organic Certification", type: "certification" }, // Bangalore
-                { coords: [17.3850, 78.4867], title: "Transport Services", type: "logistics" }, // Hyderabad
-                { coords: [26.9124, 75.7873], title: "Irrigation Solutions", type: "service" } // Jaipur
-            ];
-            
-            serviceLocations.forEach(location => {
-                let iconColor;
-                switch(location.type) {
-                    case 'equipment': iconColor = 'blue'; break;
-                    case 'service': iconColor = 'green'; break;
-                    case 'certification': iconColor = 'orange'; break;
-                    case 'logistics': iconColor = 'red'; break;
-                    default: iconColor = 'gray';
-                }
-                
-                const icon = L.divIcon({
-                    className: 'custom-icon',
-                    html: `<div style="background-color: ${iconColor}" class="w-6 h-6 rounded-full flex items-center justify-center text-white">
-                        <i class="fas fa-${location.type === 'equipment' ? 'tractor' : location.type === 'service' ? 'tools' : location.type === 'certification' ? 'certificate' : 'truck'} text-xs"></i>
-                    </div>`,
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
-                });
-                
-                const marker = L.marker(location.coords, { icon: icon })
-                    .addTo(servicesMap)
-                    .bindPopup(`<b>${location.title}</b><br>Available in this area`);
-                serviceMarkers.push(marker);
-            });
-        }
-
-        // Get user location
-        function getUserLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        userLocation = [position.coords.latitude, position.coords.longitude];
-                        document.getElementById('locationText').textContent = "Near You";
-                        document.getElementById('locationInput').value = "Current Location";
-                        
-                        // Update main map view
-                        map.setView(userLocation, 10);
-                        
-                        // Add user location marker
-                        const userIcon = L.divIcon({
-                            className: 'custom-icon',
-                            html: '<div style="background-color: #2E7D32" class="w-6 h-6 rounded-full flex items-center justify-center text-white"><i class="fas fa-user text-xs"></i></div>',
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
-                        });
-                        
-                        L.marker(userLocation, { icon: userIcon })
-                            .addTo(map)
-                            .bindPopup("Your Location")
-                            .openPopup();
-                            
-                        // Update services map view
-                        servicesMap.setView(userLocation, 10);
-                        
-                        // Show nearby services (simulated)
-                        showNearbyServices(userLocation);
-                    },
-                    error => {
-                        console.error("Error getting location:", error);
-                        document.getElementById('locationText').textContent = "Location Unknown";
-                        initMaps();
-                    }
-                );
-            } else {
-                console.log("Geolocation not supported");
-                document.getElementById('locationText').textContent = "Location Unavailable";
-                initMaps();
-            }
-        }
-
-        // Show nearby services (simulated)
-        function showNearbyServices(userCoords) {
-            // In a real app, this would query a backend API
-            // For demo, we'll just adjust some existing markers
-            
-            serviceMarkers.forEach(marker => {
-                const distance = calculateDistance(
-                    userCoords[0], userCoords[1],
-                    marker.getLatLng().lat, marker.getLatLng().lng
-                );
-                
-                // Simple simulation - markers within 300km are "nearby"
-                if (distance < 300) {
-                    marker.setOpacity(1);
-                    marker.openPopup();
-                } else {
-                    marker.setOpacity(0.5);
-                }
-            });
-        }
-
-        // Simplified distance calculation (for demo purposes)
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            // Convert degrees to radians
-            const radLat1 = lat1 * Math.PI / 180;
-            const radLat2 = lat2 * Math.PI / 180;
-            const radLon1 = lon1 * Math.PI / 180;
-            const radLon2 = lon2 * Math.PI / 180;
-            
-            // Haversine formula
-            const dLat = radLat2 - radLat1;
-            const dLon = radLon2 - radLon1;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(radLat1) * Math.cos(radLat2) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const distance = 6371 * c; // Earth's radius in km
-            
-            return distance;
-        }
-
-        // Toggle mobile menu
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobileMenu');
-            menu.classList.toggle('hidden');
-        }
-
-        // Toggle language dropdown
-        function toggleLanguageDropdown() {
-            const menu = document.getElementById('languageMenu');
-            menu.classList.toggle('hidden');
-        }
-
-        // Toggle user menu
-        function toggleUserMenu() {
-            const menu = document.getElementById('userMenu');
-            menu.classList.toggle('hidden');
-        }
-
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('#languageDropdown')) {
-                document.getElementById('languageMenu').classList.add('hidden');
-            }
-            if (!event.target.closest('#userMenuBtn')) {
-                document.getElementById('userMenu').classList.add('hidden');
-            }
-        });
-
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            initMaps();
-            getUserLocation();
-            
-            // Set up event listeners
-            document.getElementById('locationBtn').addEventListener('click', getUserLocation);
-            document.getElementById('detectLocation').addEventListener('click', getUserLocation);
-            document.getElementById('languageDropdown').addEventListener('click', toggleLanguageDropdown);
-            document.getElementById('userMenuBtn').addEventListener('click', toggleUserMenu);
-            
-            // Mobile menu toggle
-            document.querySelector('.lg\\:hidden button').addEventListener('click', toggleMobileMenu);
-            
-            // Prevent dropdown from closing when clicking inside
-            document.getElementById('languageMenu').addEventListener('click', e => e.stopPropagation());
-            document.getElementById('userMenu').addEventListener('click', e => e.stopPropagation());
-        });
-
-        // Sample function to handle form submission
-        function handleSearch(event) {
-            event.preventDefault();
-            // In a real app, this would trigger a search API call
-            alert('Search functionality would be implemented here');
-        }
-    </script>
-</body>
-</html>
+                        <li class="flex items-start">
+                            <i class="fas fa-phone-alt mt-1 mr-2 text-primary-200"></i>
+                            <span class="text-primary-200"
